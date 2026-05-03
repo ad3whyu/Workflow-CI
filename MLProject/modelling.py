@@ -55,7 +55,7 @@ def train_model(n_estimators, max_depth, min_samples_split):
         mlflow.log_artifact("feature_importance_ci.png")
 
         # 7. Log Model
-        mlflow.sklearn.log_model(model, "model_retrained")
+        mlflow.sklearn.save_model(model, "model_retrained")
 
         print(f"Retraining Selesai! R2 Score: {r2:.4f}")
 
