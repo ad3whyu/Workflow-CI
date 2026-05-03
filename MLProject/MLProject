@@ -2,6 +2,9 @@ name: Car_Price_Retraining_CI
 
 conda_env: conda.yaml
 
+docker_env:
+  image: ad3whyu/car-price-predictor:latest
+  
 entry_points:
   main:
     parameters:
