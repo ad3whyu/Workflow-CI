@@ -1,0 +1,1 @@
+https://hub.docker.com/r/ad3whyu/car-price-predictor
