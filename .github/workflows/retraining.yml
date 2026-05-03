@@ -27,12 +27,11 @@ jobs:
           pip install mlflow dagshub pandas scikit-learn matplotlib seaborn docker
 
       - name: Run Training (MLflow Project)
-        id: train_model
         env:
           DAGSHUB_USER_TOKEN: ${{ secrets.DAGSHUB_TOKEN }}
         run: |
+          # Masuk ke folder MLProject yang ada di dalam Workflow-CI
           cd Workflow-CI/MLProject
-          # Menjalankan training dan memastikan koneksi ke DagsHub
           mlflow run . -P n_estimators=120
 
       - name: Login to Docker Hub
@@ -43,10 +42,9 @@ jobs:
 
       - name: Build Docker Image with MLflow
         run: |
+          # Masuk ke folder yang sama untuk build docker
           cd Workflow-CI/MLProject
-          # Menggunakan 'models:/' untuk mengambil model yang baru saja diregister 
-          # atau arahkan ke uris yang tepat jika sudah didefinisikan di modelling.py
-          mlflow models build-docker -m "model_retrained" -n "ad3whyu/car-price-predictor:latest" --enable-mlserver
+          mlflow models build-docker -m "model_retrained" -n "${{ secrets.DOCKERHUB_USERNAME }}/car-price-predictor:latest"
           
       - name: Push Image to Docker Hub
         run: docker push ad3whyu/car-price-predictor:latest
