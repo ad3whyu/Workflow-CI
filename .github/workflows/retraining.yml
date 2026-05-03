@@ -3,7 +3,11 @@ name: Model Retraining & Docker Build
 on:
   push:
     branches: [ main ]
-    paths: [ 'Workflow-CI/MLProject/modelling.py' ]
+    # Diperlebar agar perubahan di folder MLProject apa pun memicu retraining
+    paths: 
+      - 'Workflow-CI/MLProject/**'
+  # Menambahkan ini agar tombol "Run workflow" muncul di tab Actions
+  workflow_dispatch: 
 
 jobs:
   retrain-and-build:
@@ -19,13 +23,16 @@ jobs:
 
       - name: Install Dependencies
         run: |
+          python -m pip install --upgrade pip
           pip install mlflow dagshub pandas scikit-learn matplotlib seaborn docker
 
       - name: Run Training (MLflow Project)
+        id: train_model
         env:
           DAGSHUB_USER_TOKEN: ${{ secrets.DAGSHUB_TOKEN }}
         run: |
           cd Workflow-CI/MLProject
+          # Menjalankan training dan memastikan koneksi ke DagsHub
           mlflow run . -P n_estimators=120
 
       - name: Login to Docker Hub
@@ -37,8 +44,9 @@ jobs:
       - name: Build Docker Image with MLflow
         run: |
           cd Workflow-CI/MLProject
-          # Perintah ini membuat image Docker berisi model yang baru dilatih
-          mlflow models build-docker -m "runs:/${{ github.run_id }}/model" -n "ad3whyu/car-price-predictor:latest"
+          # Menggunakan 'models:/' untuk mengambil model yang baru saja diregister 
+          # atau arahkan ke uris yang tepat jika sudah didefinisikan di modelling.py
+          mlflow models build-docker -m "model_retrained" -n "ad3whyu/car-price-predictor:latest" --enable-mlserver
           
       - name: Push Image to Docker Hub
         run: docker push ad3whyu/car-price-predictor:latest
