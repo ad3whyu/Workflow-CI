@@ -6,7 +6,7 @@ on:
     branches:
       - main
     paths:
-      - 'Workflow-CI/**'
+      - "Workflow-CI/MLProject/modelling.py"
   workflow_dispatch: # Memungkinkan kamu menjalankan manual dari tab Actions
 
 jobs:
@@ -20,7 +20,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.10'
+          python-version: "3.10"
 
       - name: Install Dependencies
         run: |
@@ -29,9 +29,8 @@ jobs:
 
       - name: Run MLflow Project (Retraining)
         env:
-          # Pastikan kamu sudah menambahkan DAGSHUB_TOKEN di Settings > Secrets > Actions repositori kamu
-          DAGSHUB_USER_TOKEN: ${{ secrets.2c440f8ead2bf94bd3082104b3ee91107e1e1e3b}}
+          DAGSHUB_USER_TOKEN: ${{ secrets.DAGSHUB_TOKEN}}
         run: |
-          cd Workflow-CI
+          cd Workflow-CI/MLProject
           # Menjalankan MLflow Project menggunakan entry point 'main'
           mlflow run . -P n_estimators=120 -P max_depth=15
