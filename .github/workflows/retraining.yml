@@ -3,10 +3,9 @@ name: Model Retraining & Docker Build
 on:
   push:
     branches: [ main ]
-    # Diperlebar agar perubahan di folder MLProject apa pun memicu retraining
+    # Mengamati perubahan di dalam folder MLProject
     paths: 
       - 'Workflow-CI/MLProject/**'
-  # Menambahkan ini agar tombol "Run workflow" muncul di tab Actions
   workflow_dispatch: 
 
 jobs:
@@ -29,9 +28,9 @@ jobs:
       - name: Run Training (MLflow Project)
         env:
           DAGSHUB_USER_TOKEN: ${{ secrets.DAGSHUB_TOKEN }}
+        # Menggunakan working-directory jauh lebih aman daripada 'cd' manual
+        working-directory: ./Workflow-CI/MLProject
         run: |
-          # Masuk ke folder MLProject yang ada di dalam Workflow-CI
-          cd Workflow-CI/MLProject
           mlflow run . -P n_estimators=120
 
       - name: Login to Docker Hub
@@ -41,10 +40,11 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Build Docker Image with MLflow
+        working-directory: ./Workflow-CI/MLProject
         run: |
-          # Masuk ke folder yang sama untuk build docker
-          cd Workflow-CI/MLProject
+          # Membangun image Docker menggunakan username dari secrets agar konsisten
           mlflow models build-docker -m "model_retrained" -n "${{ secrets.DOCKERHUB_USERNAME }}/car-price-predictor:latest"
           
       - name: Push Image to Docker Hub
-        run: docker push ad3whyu/car-price-predictor:latest
+        run: |
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/car-price-predictor:latest
