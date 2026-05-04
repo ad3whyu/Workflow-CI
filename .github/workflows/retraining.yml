@@ -37,7 +37,9 @@ jobs:
       - name: Verify Model Folder
         working-directory: MLProject
         run: |
-          # Memastikan folder model_retrained benar-benar ada sebelum build docker
+          # Mengambil folder model yang diselamatkan dari Home Directory ke folder saat ini
+          cp -r ~/model_retrained .
+          
           ls -la
           ls -R model_retrained
 
