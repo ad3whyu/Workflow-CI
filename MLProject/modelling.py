@@ -7,13 +7,22 @@ import mlflow.sklearn
 from sklearn.ensemble import RandomForestRegressor
 
 def jalankan_retraining(n_estimators, max_depth, min_samples_split):
-    # --- TAMBAHKAN KUNCI DAGSHUB ---
-    # Agar riwayat GitHub Actions juga tercatat secara online
+    # --- KUNCI DAGSHUB ---
     mlflow.set_tracking_uri("https://dagshub.com/ad3whyu/Eksperimen_SML_Ade-Wahyu-Warpudin.mlflow")
     mlflow.set_experiment("Car_Price_Retraining_CICD")
 
+    # --- PERBAIKAN PATH DATA & MODEL ---
+    # Karena mlflow run mengeksekusi di /tmp, kita paksa kembali ke folder asli GitHub Actions
+    if "GITHUB_WORKSPACE" in os.environ:
+        base_dir = os.path.join(os.environ["GITHUB_WORKSPACE"], "MLProject")
+        data_dir = os.path.join(base_dir, "used_car_price_dataset_extended_preprocessing")
+        lokasi_folder_lokal = os.path.join(base_dir, "model_retrained")
+    else:
+        # Fallback jika dijalankan manual di laptop lokal
+        data_dir = "used_car_price_dataset_extended_preprocessing/"
+        lokasi_folder_lokal = "model_retrained"
+
     # 1. LOAD DATASET
-    data_dir = "used_car_price_dataset_extended_preprocessing/"
     train_df = pd.read_csv(os.path.join(data_dir, "data_train_ready.csv"))
     
     X_train = train_df.drop(columns=['price_usd'])
@@ -35,18 +44,16 @@ def jalankan_retraining(n_estimators, max_depth, min_samples_split):
     with mlflow.start_run(run_name="Automated_Retraining"):
         rf_model.fit(X_train, y_train)
         
-        # --- PERBAIKAN UTAMA: LOG KE DAGSHUB & SIMPAN FISIK LOKAL ---
-        
         # A. Upload ke DagsHub sebagai rekam jejak
         mlflow.sklearn.log_model(rf_model, "model_artifacts")
         
-        # B. Bikin folder fisik 'model_retrained' agar Docker bisa melakukan build!
-        if os.path.exists("model_retrained"):
-            shutil.rmtree("model_retrained") # Hapus folder lama biar tidak error tertimpa
+        # B. Simpan folder fisik 'model_retrained' secara paksa ke workspace asli!
+        if os.path.exists(lokasi_folder_lokal):
+            shutil.rmtree(lokasi_folder_lokal) # Hapus folder lama biar tidak error tertimpa
             
-        mlflow.sklearn.save_model(rf_model, "model_retrained")
+        mlflow.sklearn.save_model(rf_model, lokasi_folder_lokal)
         
-        print("✅ Retraining selesai! Folder fisik 'model_retrained' berhasil dibuat untuk Docker.")
+        print(f"✅ Retraining selesai! Folder fisik berhasil dibuat di: {lokasi_folder_lokal}")
 
 if __name__ == "__main__":
     # 3. TANGKAP PARAMETER DARI TERMINAL / MLPROJECT
