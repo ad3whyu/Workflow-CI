@@ -8,7 +8,7 @@ from sklearn.ensemble import RandomForestRegressor
 def jalankan_retraining(n_estimators, max_depth, min_samples_split):
     # 1. LOAD DATASET
     # Pastikan path ini sesuai dengan struktur folder kamu di GitHub
-    data_dir = "../used_car_price_dataset_extended_preprocessing/"
+    data_dir = "used_car_price_dataset_extended_preprocessing/"
     train_df = pd.read_csv(os.path.join(data_dir, "data_train_ready.csv"))
     
     X_train = train_df.drop(columns=['price_usd'])
