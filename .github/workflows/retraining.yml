@@ -27,10 +27,11 @@ jobs:
       - name: Run Training
         env:
           DAGSHUB_USER_TOKEN: ${{ secrets.DAGSHUB_TOKEN }}
-        working-directory: MLProject
+          MLFLOW_TRACKING_URI: https://dagshub.com/ad3whyu/Eksperimen_SML_Ade-Wahyu-Warpudin.mlflow
+          MLFLOW_TRACKING_USERNAME: ad3whyu
+          MLFLOW_TRACKING_PASSWORD: ${{ secrets.DAGSHUB_TOKEN }}
         run: |
-          # Menjalankan script secara langsung agar sinkron dengan DagsHub & lokal
-          python modelling.py --n_estimators 120 --max_depth 10 --min_samples_split 2
+          mlflow run MLProject/ --no-conda -P n_estimators=120 -P max_depth=10 -P min_samples_split=2
 
       - name: Verify Model Folder
         working-directory: MLProject
