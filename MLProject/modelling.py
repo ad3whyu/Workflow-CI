@@ -7,15 +7,19 @@ import mlflow.sklearn
 from sklearn.ensemble import RandomForestRegressor
 
 def jalankan_retraining(n_estimators, max_depth, min_samples_split):
+    # Kunci URI ke DagsHub (sudah diamankan via environment variables GitHub Actions)
     mlflow.set_tracking_uri("https://dagshub.com/ad3whyu/Eksperimen_SML_Ade-Wahyu-Warpudin.mlflow")
-    mlflow.set_experiment("Car_Price_Retraining_CICD")
 
-    # Bikin path data otomatis mendeteksi lokasi file ini berada (kebal error temporary folder)
+    # Bikin path data otomatis
     script_dir = os.path.dirname(os.path.abspath(__file__))
     data_path = os.path.join(script_dir, "used_car_price_dataset_extended_preprocessing", "data_train_ready.csv")
     
+    # Cek ketersediaan dataset
+    if not os.path.exists(data_path):
+         # Fallback 1: Jika dijalankan di GitHub Actions
+         data_path = "used_car_price_dataset_extended_preprocessing/data_train_ready.csv"
+         
     train_df = pd.read_csv(data_path)
-    
     X_train = train_df.drop(columns=['price_usd'])
     y_train = train_df['price_usd']
 
@@ -30,19 +34,37 @@ def jalankan_retraining(n_estimators, max_depth, min_samples_split):
     
     mlflow.sklearn.autolog(log_models=False)
     
-    with mlflow.start_run(run_name="Automated_Retraining"):
+    # ─── PERBAIKAN KRUSIAL: JANGAN START RUN BARU ───
+    # Karena mlflow run sudah membukakan pintu untuk kita, kita cukup mengambil Run ID yang sedang aktif
+    active_run = mlflow.active_run()
+    
+    # Jika dijalankan via mlflow run, active_run pasti ada nilainya
+    if active_run:
+        print(f"Menggunakan Run ID yang sudah dibuat mlflow: {active_run.info.run_id}")
         rf_model.fit(X_train, y_train)
         
-        # A. Upload ke DagsHub
         mlflow.sklearn.log_model(rf_model, "model_artifacts")
         
-        # B. JURUS PAMUNGKAS: Simpan folder fisik ke Home Directory Server (Bebas dari penghapusan MLflow)
         lokasi_aman = os.path.expanduser("~/model_retrained")
         if os.path.exists(lokasi_aman):
             shutil.rmtree(lokasi_aman)
             
         mlflow.sklearn.save_model(rf_model, lokasi_aman)
         print(f"✅ Folder model fisik berhasil diselamatkan ke: {lokasi_aman}")
+        
+    else:
+        # Fallback jika dijalankan manual (python modelling.py)
+        with mlflow.start_run(run_name="Automated_Retraining"):
+            rf_model.fit(X_train, y_train)
+            
+            mlflow.sklearn.log_model(rf_model, "model_artifacts")
+            
+            lokasi_aman = os.path.expanduser("~/model_retrained")
+            if os.path.exists(lokasi_aman):
+                shutil.rmtree(lokasi_aman)
+                
+            mlflow.sklearn.save_model(rf_model, lokasi_aman)
+            print(f"✅ Folder model fisik berhasil diselamatkan ke: {lokasi_aman}")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

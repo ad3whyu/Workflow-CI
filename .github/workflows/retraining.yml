@@ -31,9 +31,9 @@ jobs:
           MLFLOW_TRACKING_USERNAME: ad3whyu
           MLFLOW_TRACKING_PASSWORD: ${{ secrets.DAGSHUB_TOKEN }}
         run: |
-          # Menjalankan project MLflow dengan --env-manager=local
-          mlflow run MLProject/ --env-manager=local -P n_estimators=120 -P max_depth=10 -P min_samples_split=2
-
+          # Tambahkan --experiment-name agar MLflow Project membuat run di tempat yang tepat
+          mlflow run MLProject/ --env-manager=local --experiment-name "Car_Price_Retraining_CICD" -P n_estimators=120 -P max_depth=10 -P min_samples_split=2
+          
       - name: Verify Model Folder
         working-directory: MLProject
         run: |
