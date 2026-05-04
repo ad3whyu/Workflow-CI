@@ -31,7 +31,8 @@ jobs:
           MLFLOW_TRACKING_USERNAME: ad3whyu
           MLFLOW_TRACKING_PASSWORD: ${{ secrets.DAGSHUB_TOKEN }}
         run: |
-          mlflow run MLProject/ --no-conda -P n_estimators=120 -P max_depth=10 -P min_samples_split=2
+          # Menggunakan --env-manager=local sebagai pengganti --no-conda yang sudah usang
+          mlflow run MLProject/ --env-manager=local -P n_estimators=120 -P max_depth=10 -P min_samples_split=2
 
       - name: Verify Model Folder
         working-directory: MLProject
